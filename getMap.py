@@ -14,6 +14,7 @@ import os,sys, time, shutil, fnmatch, json, datetime
 
 from osgeo import gdal,ogr,osr
 import numpy as np
+from scipy.stats import percentileofscore
 from optparse import OptionParser
 from rios import applier
 from flask import Flask, request, current_app, make_response,send_from_directory
@@ -182,64 +183,6 @@ def getPropertyMask(obs):
 
 
     return obs
-
-
-def percentileofscore(a, score, kind='rank'):
-    """
-    The percentile rank of a score relative to a list of scores.
-
-    A `percentileofscore` of, for example, 80% means that 80% of the
-    scores in `a` are below the given score. In the case of gaps or
-    ties, the exact definition depends on the optional keyword, `kind`.
-
-    Parameters
-    ----------
-    a : array_like
-        Array of scores to which `score` is compared.
-    score : int or float
-        Score that is compared to the elements in `a`.
-    kind : {'rank', 'weak', 'strict', 'mean'}, optional
-        This optional parameter specifies the interpretation of the
-        resulting score:
-
-        - "rank": Average percentage ranking of score.  In case of
-                  multiple matches, average the percentage rankings of
-                  all matching scores.
-        - "weak": This kind corresponds to the definition of a cumulative
-                  distribution function.  A percentileofscore of 80%
-                  means that 80% of values are less than or equal
-                  to the provided score.
-        - "strict": Similar to "weak", except that only values that are
-                    strictly less than the given score are counted.
-        - "mean": The average of the "weak" and "strict" scores, often used in
-                  testing.  See
-
-                  http://en.wikipedia.org/wiki/Percentile_rank
-    """
-    a = np.array(a)
-    n = len(a)
-
-    if kind == 'rank':
-        if not np.any(a == score):
-            a = np.append(a, score)
-            a_len = np.array(list(range(len(a))))
-        else:
-            a_len = np.array(list(range(len(a)))) + 1.0
-
-        a = np.sort(a)
-        idx = [a == score]
-        pct = (np.mean(a_len[idx]) / n) * 100.0
-        return pct
-
-    elif kind == 'strict':
-        return np.sum(a < score) / float(n) * 100
-    elif kind == 'weak':
-        return np.sum(a <= score) / float(n) * 100
-    elif kind == 'mean':
-        return (np.sum(a < score) + np.sum(a <= score)) * 50 / float(n)
-    else:
-        raise ValueError("kind can only be 'rank', 'strict', 'weak' or 'mean'")
-
 
 
 ######################################################################################
